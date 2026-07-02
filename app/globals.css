@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  /* FanalytiX palette — validated for dark surface */
+  --color-pitch-950: #050807;
+  --color-pitch-900: #0a0f0d;
+  --color-pitch-850: #0d1512;
+  --color-pitch-800: #111a16;
+  --color-pitch-700: #1a2620;
+
+  --color-neon-green: #4ade80;
+  --color-neon-green-dim: #22c55e;
+  --color-neon-red: #e11d48;
+  --color-neon-red-bright: #fb7185;
+  --color-neon-yellow: #facc15;
+  --color-neon-blue: #0ea5e9;
+  --color-neutral-ink: #cbd5e1;
+
+  --font-display: var(--font-display), system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-pitch-950);
+  color: #e7ece9;
+  overflow-x: hidden;
+}
+
+/* ---------- Reusable surface treatments ---------- */
+
+.glass-panel {
+  background: linear-gradient(
+    165deg,
+    rgba(20, 30, 25, 0.72),
+    rgba(8, 13, 11, 0.85)
+  );
+  border: 1px solid rgba(74, 222, 128, 0.08);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+.glass-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.text-glow-green {
+  text-shadow: 0 0 18px rgba(74, 222, 128, 0.55);
+}
+
+.ring-glow-green {
+  box-shadow:
+    0 0 12px rgba(74, 222, 128, 0.35),
+    0 0 2px rgba(74, 222, 128, 0.6);
+}
+
+/* ---------- Scrollbars ---------- */
+
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(74, 222, 128, 0.25) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: rgba(74, 222, 128, 0.22);
+  border-radius: 999px;
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- Ticker marquee ---------- */
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker-scroll 60s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* ---------- Live pulse dot ---------- */
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+  }
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
+  }
+}
+
+.live-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+.live-dot-red {
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}

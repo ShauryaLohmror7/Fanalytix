@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3456)",
+      "Bash(break)",
+      "Bash(curl -s http://localhost:3456/api/worldcup/live)",
+      "Read(//Users/shaur/Library/Caches/**)",
+      "Bash(node -e \"try{require.resolve\\('playwright'\\)}catch\\(e\\){console.log\\('no local playwright'\\)}\")",
+      "Bash(ls /Applications/ | grep -i -E \"chrome|chromium|edge|brave\" ; ls \"/Applications/Google Chrome.app/Contents/MacOS/\" 2>/dev/null)",
+      "Read(//Applications/**)",
+      "Read(//Applications/Google Chrome.app/Contents/MacOS/**)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu-sandbox --no-first-run --user-data-dir=/private/tmp/claude-501/-Users-shaur-Fanalytix/0adf8e67-aaf1-4000-b98e-001b8d3bf9fd/scratchpad/chrome-profile --window-size=1920,1080 --hide-scrollbars --virtual-time-budget=15000 --screenshot=/private/tmp/claude-501/-Users-shaur-Fanalytix/0adf8e67-aaf1-4000-b98e-001b8d3bf9fd/scratchpad/dashboard.png http://localhost:3456)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu-sandbox --no-first-run --user-data-dir=/private/tmp/claude-501/-Users-shaur-Fanalytix/0adf8e67-aaf1-4000-b98e-001b8d3bf9fd/scratchpad/chrome-profile2 --window-size=1920,1080 --hide-scrollbars --virtual-time-budget=15000 --screenshot=/private/tmp/claude-501/-Users-shaur-Fanalytix/0adf8e67-aaf1-4000-b98e-001b8d3bf9fd/scratchpad/dashboard2.png http://localhost:3456)",
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless=new --disable-gpu-sandbox --no-first-run --user-data-dir=/private/tmp/claude-501/-Users-shaur-Fanalytix/0adf8e67-aaf1-4000-b98e-001b8d3bf9fd/scratchpad/chrome-profile3 --window-size=1920,1080 --hide-scrollbars --virtual-time-budget=15000 --screenshot=/private/tmp/claude-501/-Users-shaur-Fanalytix/0adf8e67-aaf1-4000-b98e-001b8d3bf9fd/scratchpad/dashboard3.png http://localhost:3456)",
+      "Bash(lsof -iTCP -sTCP:LISTEN -P)"
+    ]
+  }
+}
