@@ -126,6 +126,52 @@ export function generateSentimentSnapshot(context?: {
   };
 }
 
+/**
+ * Additional demo posts for "Load more" — same simulated engine, page by
+ * page. Deterministic per (bucket, page) so pagination is stable.
+ */
+export function generateMorePosts(
+  page: number,
+  context?: { homeName?: string; awayName?: string },
+): SocialPost[] {
+  const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
+  const rand = mulberry32((bucket + page * 7919) * 2654435761);
+  const home = context?.homeName ?? "the favorites";
+  const away = context?.awayName ?? "the underdogs";
+
+  const texts = [
+    `Tactical shift from ${home} paying off — the wide overloads are relentless. #WorldCup2026`,
+    `Neutral fans are winning tonight. ${home} vs ${away} is everything this tournament promised. #FIFAWC26`,
+    `Set pieces will decide this one. Neither keeper looks comfortable under the high ball. #WorldCup2026`,
+    `The travelling support for ${away} deserves a trophy of their own. Unbelievable noise. #FIFAWC26`,
+    `Fitness levels in this heat are becoming the real story of the round. #WorldCup2026`,
+    `Every touch from the young number 10 is a highlight reel. Star being born. #FIFAWC26`,
+  ];
+  const authors: Array<[string, string, boolean]> = [
+    ["Touchline Notes", "@touchline_demo", false],
+    ["Stat Bunker", "@statbunker_demo", true],
+    ["Full Time Whistle", "@ftw_demo", false],
+  ];
+
+  return Array.from({ length: 3 }).map((_, i) => {
+    const idx = (page * 3 + i) % texts.length;
+    const a = authors[(page + i) % authors.length];
+    return {
+      id: `sim-${bucket}-p${page}-${i}`,
+      author: a[0],
+      handle: a[1],
+      verified: a[2],
+      minutesAgo: Math.round(20 + page * 12 + rand() * 20),
+      text: texts[idx],
+      tag: "#WorldCup2026",
+      likes: Math.round(15 + rand() * 140),
+      reposts: Math.round(5 + rand() * 90),
+      replies: Math.round(10 + rand() * 220),
+      impressions: Math.round(3000 + rand() * 8000),
+    };
+  });
+}
+
 function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
 }

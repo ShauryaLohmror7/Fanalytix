@@ -27,6 +27,8 @@ export interface WorldCupProvider {
   getLiveMatches(): Promise<Match[]>;
   /** All of today's matches (any status), ordered by kickoff. */
   getTodayMatches(): Promise<Match[]>;
+  /** Every match of the current season/tournament, ordered by kickoff. */
+  getSeasonMatches(): Promise<Match[]>;
   /** Group standings, when the provider supports them. */
   getStandings(): Promise<StandingGroup[]>;
 }
@@ -101,6 +103,7 @@ type RawMatch = {
     playerIn?: RawPlayer;
     playerOut?: RawPlayer;
   }>;
+  referees?: Array<{ name?: string; type?: string }>;
   statistics?: Record<string, { home?: number; away?: number }>;
 };
 
@@ -147,10 +150,11 @@ class FootballDataProvider implements WorldCupProvider {
       `/competitions/${this.competition}/matches?status=IN_PLAY,PAUSED`,
       20,
     );
-    const matches = (payload.matches ?? []).map((m) => this.mapMatch(m));
-    // The list endpoint omits events; enrich the matches in play with the
-    // detail endpoint, tolerating providers/plans that don't expose it.
-    return Promise.all(matches.map((m) => this.enrichMatch(m)));
+    // No per-match detail enrichment: on football-data's free tier the
+    // detail endpoint adds nothing (no events/minute/stats) and the extra
+    // calls eat into the 10 req/min rate limit. Events map automatically
+    // if a provider includes them in the list payload.
+    return (payload.matches ?? []).map((m) => this.mapMatch(m));
   }
 
   async getTodayMatches(): Promise<Match[]> {
@@ -160,6 +164,18 @@ class FootballDataProvider implements WorldCupProvider {
     const payload = await this.request<{ matches?: RawMatch[] }>(
       `/competitions/${this.competition}/matches?dateFrom=${fmt(today)}&dateTo=${fmt(tomorrow)}`,
       60,
+    );
+    return (payload.matches ?? [])
+      .map((m) => this.mapMatch(m))
+      .sort((a, b) => a.utcDate.localeCompare(b.utcDate));
+  }
+
+  async getSeasonMatches(): Promise<Match[]> {
+    // Whole-tournament schedule changes slowly — cache aggressively to
+    // stay well inside free-tier rate limits.
+    const payload = await this.request<{ matches?: RawMatch[] }>(
+      `/competitions/${this.competition}/matches`,
+      300,
     );
     return (payload.matches ?? [])
       .map((m) => this.mapMatch(m))
@@ -199,24 +215,6 @@ class FootballDataProvider implements WorldCupProvider {
           points: r.points ?? 0,
         })),
       }));
-  }
-
-  private async enrichMatch(match: Match): Promise<Match> {
-    try {
-      const raw = await this.request<RawMatch>(`/matches/${match.id}`, 20);
-      const detailed = this.mapMatch(raw);
-      return {
-        ...match,
-        events: detailed.events?.length ? detailed.events : match.events,
-        statistics: detailed.statistics?.length
-          ? detailed.statistics
-          : match.statistics,
-        minute: detailed.minute ?? match.minute,
-      };
-    } catch {
-      // Detail endpoint unavailable on this plan/provider — keep list data.
-      return match;
-    }
   }
 
   private mapMatch(raw: RawMatch): Match {
@@ -272,6 +270,10 @@ class FootballDataProvider implements WorldCupProvider {
       awayTeam: mapTeam(raw.awayTeam),
       homeScore: raw.score?.fullTime?.home ?? undefined,
       awayScore: raw.score?.fullTime?.away ?? undefined,
+      homeScoreHT: raw.score?.halfTime?.home ?? undefined,
+      awayScoreHT: raw.score?.halfTime?.away ?? undefined,
+      referee: (raw.referees ?? []).find((r) => !r.type || r.type === "REFEREE")
+        ?.name,
       events: events.length ? events : undefined,
       statistics: mapStatistics(raw.statistics),
     };

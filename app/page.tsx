@@ -1,80 +1,209 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import TopNav from "@/components/TopNav";
-import Sidebar from "@/components/Sidebar";
-import LiveMatchPanel from "@/components/LiveMatchPanel";
-import SentimentPanel from "@/components/SentimentPanel";
-import MatchTicker from "@/components/MatchTicker";
-import { useWorldCupData } from "@/lib/useWorldCupData";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Hexagon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import LunarBackground from "@/components/landing/LunarBackground";
+import { BlurPullUp, TrackingReveal } from "@/components/landing/AnimatedText";
+import IntroShader from "@/components/IntroShader";
+import { EXPERIENCES, resolveExperience } from "@/lib/experiences";
 
-// Three.js can only run in the browser — skip SSR for the globe.
-const FootballGlobe = dynamic(() => import("@/components/FootballGlobe"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="h-40 w-40 animate-pulse rounded-full border border-neon-green/20 bg-neon-green/5" />
-    </div>
-  ),
-});
+// The Football arena is a lazily-loaded module — its code (three.js, charts,
+// data providers) only downloads once someone summons a football event.
+const FootballExperience = dynamic(
+  () => import("@/components/football/FootballExperience"),
+  { ssr: false },
+);
 
-export default function OverviewPage() {
-  const {
-    configured,
-    loading,
-    error,
-    liveMatches,
-    featuredMatch,
-    tickerMatches,
-  } = useWorldCupData();
+type Stage =
+  | { name: "landing" }
+  | { name: "transition"; query: string }
+  | { name: "football"; query: string };
+
+/** One elegant example per arena — shows the breadth of the idea. */
+const EXAMPLES = ["FIFA World Cup 2026", "Switzerland vs Algeria", "SpaceX IPO"];
+
+function Landing({ onSummon }: { onSummon: (query: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [miss, setMiss] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const submit = (raw: string) => {
+    const q = raw.trim();
+    if (!q) return;
+    const exp = resolveExperience(q);
+    if (exp?.available) {
+      onSummon(q);
+      return;
+    }
+    setMiss(
+      exp
+        ? `${exp.name} — ${exp.tagline}. The Football arena is open today.`
+        : "That arena hasn’t been built yet. Football is open today — more worlds are coming.",
+    );
+  };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-pitch-950">
-      {/* Ambient page glow */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 45% at 50% 40%, rgba(16,64,40,0.28), transparent 70%)," +
-            "radial-gradient(ellipse 30% 30% at 0% 100%, rgba(14,60,38,0.18), transparent 70%)," +
-            "radial-gradient(ellipse 30% 30% at 100% 100%, rgba(80,15,35,0.12), transparent 70%)",
-        }}
-      />
+    <motion.div
+      key="landing"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.02 }}
+      transition={{ duration: 0.7 }}
+      className="relative flex h-screen w-screen flex-col overflow-hidden"
+    >
+      <LunarBackground />
 
-      <TopNav />
+      {/* Quiet wordmark */}
+      <header className="relative z-10 flex items-center gap-3 px-8 pt-7">
+        <motion.div
+          initial={{ opacity: 0, rotate: -30, scale: 0.7 }}
+          animate={{ opacity: 1, rotate: 0, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.2, 0.65, 0.3, 0.9] }}
+          className="gold-glow flex h-8 w-8 items-center justify-center rounded-full border border-gold/40 bg-[#0d1531]"
+        >
+          <Hexagon className="h-4 w-4 text-gold" strokeWidth={2.2} />
+        </motion.div>
+        <BlurPullUp
+          words={[
+            { text: "FanalytiX", className: "font-royal text-[14px] font-bold tracking-[0.16em] text-ink" },
+          ]}
+          delay={0.15}
+        />
+      </header>
 
-      <div className="relative z-10 flex min-h-0 flex-1">
-        <Sidebar />
+      {/* The question — below the orb's orbit */}
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-end px-6 pb-[16vh]">
+        <p className="text-[11px] font-medium uppercase text-gold/80">
+          <TrackingReveal text="EVENT INTELLIGENCE" delay={0.35} />
+        </p>
+        <h1 className="font-royal mt-5 max-w-3xl text-center text-[clamp(26px,4.2vw,46px)] font-semibold leading-tight tracking-[0.04em] text-ink">
+          <BlurPullUp
+            delay={0.7}
+            stagger={0.11}
+            words={[
+              { text: "What" },
+              { text: "event" },
+              { text: "do" },
+              { text: "you" },
+              { text: "want" },
+              { text: "to" },
+              { text: "witness?", className: "shiny-text font-bold" },
+            ]}
+          />
+        </h1>
 
-        <main className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[340px_minmax(0,1fr)_380px] xl:grid-cols-[360px_minmax(0,1fr)_400px]">
-          {/* Left: live match */}
-          <div className="order-2 min-h-0 lg:order-1">
-            <LiveMatchPanel
-              match={featuredMatch}
-              configured={configured}
-              loading={loading}
-              error={error}
-            />
-          </div>
+        {/* The golden glass ask-bar, ringed by a travelling beam */}
+        <motion.div
+          initial={{ opacity: 0, y: 22, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.9, delay: 1.5, ease: [0.2, 0.65, 0.3, 0.9] }}
+          className="border-beam glass mt-11 flex w-[min(620px,92vw)] items-center gap-4 rounded-full border-gold/40 py-3 pl-7 pr-3 shadow-[0_0_60px_rgba(216,180,94,0.12)]"
+        >
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (miss) setMiss(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && submit(query)}
+            placeholder="A match, a tournament, a moment…"
+            autoFocus
+            className="w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-faint"
+            aria-label="What event do you want to witness?"
+          />
+          <button
+            onClick={() => submit(query)}
+            aria-label="Witness"
+            className="liquid-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gold"
+          >
+            <ArrowRight className="h-5 w-5" />
+          </button>
+        </motion.div>
 
-          {/* Center: 3D football globe */}
-          <div className="order-1 min-h-[420px] lg:order-2 lg:min-h-0">
-            <FootballGlobe />
-          </div>
+        {/* Gentle guidance, only when needed */}
+        <AnimatePresence mode="wait">
+          {miss && (
+            <motion.p
+              key={miss}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-5 max-w-md text-center text-[12.5px] leading-relaxed text-ink-dim"
+            >
+              {miss}
+            </motion.p>
+          )}
+        </AnimatePresence>
 
-          {/* Right: social sentiment */}
-          <div className="order-3 min-h-0">
-            <SentimentPanel match={featuredMatch} />
-          </div>
-        </main>
-      </div>
+        {/* Three whispers of what's possible */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+          {EXAMPLES.map((e, i) => (
+            <motion.button
+              key={e}
+              initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.6, delay: 2 + i * 0.12 }}
+              onClick={() => submit(e)}
+              className="liquid-btn rounded-full px-4 py-1.5 text-[12px] text-ink-dim hover:text-ink"
+            >
+              {e}
+            </motion.button>
+          ))}
+        </div>
+      </main>
 
-      <MatchTicker
-        matches={tickerMatches}
-        liveCount={liveMatches.length}
-        configured={configured}
-        loading={loading}
-      />
-    </div>
+      {/* Foot whisper */}
+      <footer className="relative z-10 pb-6 text-center text-[10px] uppercase text-ink-faint/70">
+        <TrackingReveal
+          delay={2.5}
+          from="0.6em"
+          to="0.3em"
+          text={`${EXPERIENCES.filter((e) => e.available).length} ARENA OPEN · ${EXPERIENCES.filter((e) => !e.available).length} IN THE MAKING`}
+        />
+      </footer>
+    </motion.div>
+  );
+}
+
+export default function Page() {
+  const [stage, setStage] = useState<Stage>({ name: "landing" });
+
+  // Deep-link/debug: /?arena=football&q=brazil jumps straight into an arena.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("arena") === "football") {
+      setStage({ name: "football", query: params.get("q") ?? "" });
+    }
+  }, []);
+
+  return (
+    <>
+      <AnimatePresence mode="wait">
+        {stage.name === "landing" && (
+          <Landing onSummon={(query) => setStage({ name: "transition", query })} />
+        )}
+      </AnimatePresence>
+
+      {/* The portal: the wave shader carries the visitor into the arena */}
+      <AnimatePresence>
+        {stage.name === "transition" && (
+          <IntroShader
+            onDone={() => setStage({ name: "football", query: stage.query })}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mount the arena during the transition so the world is already
+          loading behind the shader curtain */}
+      {(stage.name === "transition" || stage.name === "football") && (
+        <FootballExperience
+          initialQuery={stage.query}
+          onExit={() => setStage({ name: "landing" })}
+        />
+      )}
+    </>
   );
 }

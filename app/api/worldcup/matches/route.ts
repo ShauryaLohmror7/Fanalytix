@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getWorldCupProvider } from "@/lib/worldcupApi";
 import type { ApiEnvelope, Match } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/worldcup/matches — today's matches, any status. */
-export async function GET() {
+/**
+ * GET /api/worldcup/matches — today's matches, any status.
+ * GET /api/worldcup/matches?scope=season — the whole tournament schedule.
+ */
+export async function GET(request: NextRequest) {
   const provider = getWorldCupProvider();
   const fetchedAt = new Date().toISOString();
+  const scope = request.nextUrl.searchParams.get("scope");
 
   if (!provider) {
     return NextResponse.json<ApiEnvelope<Match[]>>({
@@ -19,7 +23,10 @@ export async function GET() {
   }
 
   try {
-    const matches = await provider.getTodayMatches();
+    const matches =
+      scope === "season"
+        ? await provider.getSeasonMatches()
+        : await provider.getTodayMatches();
     return NextResponse.json<ApiEnvelope<Match[]>>({
       configured: true,
       data: matches,

@@ -15,13 +15,13 @@ export default function StatRow({ stat }: { stat: MatchStatistic }) {
   return (
     <div className="py-1.5">
       <div className="flex items-center justify-between text-[12px]">
-        <span className="w-12 font-semibold tabular-nums text-neon-green">
+        <span className="w-12 font-semibold tabular-nums text-gold">
           {fmt(stat.home)}
         </span>
-        <span className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-slate-400">
+        <span className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-ink-faint">
           {stat.label}
         </span>
-        <span className="w-12 text-right font-semibold tabular-nums text-slate-200">
+        <span className="w-12 text-right font-semibold tabular-nums text-ink">
           {fmt(stat.away)}
         </span>
       </div>
@@ -31,14 +31,14 @@ export default function StatRow({ stat }: { stat: MatchStatistic }) {
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
           style={{ width: `${homeShare * 100}%`, transformOrigin: "left" }}
-          className="rounded-full bg-neon-green/80 shadow-[0_0_6px_rgba(74,222,128,0.5)]"
+          className="rounded-full bg-gold/80"
         />
         <motion.span
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
           style={{ width: `${(1 - homeShare) * 100}%`, transformOrigin: "right" }}
-          className="rounded-full bg-neon-red/70"
+          className="rounded-full bg-ink-faint/60"
         />
       </div>
     </div>

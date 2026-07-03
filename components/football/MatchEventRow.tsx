@@ -18,25 +18,25 @@ function eventVisual(type: MatchEvent["type"]) {
               ? "GOAL (P)"
               : "GOAL!",
         icon: <Goal className="h-3 w-3" />,
-        chip: "bg-neon-green/15 text-neon-green border-neon-green/30",
+        chip: "bg-gold/12 text-gold border-gold/30",
       };
     case "YELLOW_CARD":
       return {
         label: "YELLOW CARD",
-        icon: <span className="block h-3 w-2 rounded-[2px] bg-neon-yellow" />,
-        chip: "bg-neon-yellow/10 text-neon-yellow border-neon-yellow/30",
+        icon: <span className="block h-3 w-2 rounded-[2px] bg-warn" />,
+        chip: "bg-warn/10 text-warn border-warn/30",
       };
     case "RED_CARD":
       return {
         label: "RED CARD",
-        icon: <span className="block h-3 w-2 rounded-[2px] bg-neon-red-bright" />,
-        chip: "bg-neon-red/15 text-neon-red-bright border-neon-red/40",
+        icon: <span className="block h-3 w-2 rounded-[2px] bg-neg-bright" />,
+        chip: "bg-neg/15 text-neg-bright border-neg/40",
       };
     case "SUBSTITUTION":
       return {
         label: "SUBSTITUTION",
         icon: <ArrowLeftRight className="h-3 w-3" />,
-        chip: "bg-neon-blue/10 text-sky-300 border-neon-blue/30",
+        chip: "bg-vol/10 text-sky-300 border-vol/30",
       };
   }
 }
@@ -65,7 +65,7 @@ export default function MatchEventRow({
       transition={{ duration: 0.35, delay: index * 0.05 }}
       className="flex items-center gap-3 border-b border-white/[0.04] py-2 last:border-0"
     >
-      <span className="w-9 text-[12px] font-bold tabular-nums text-slate-300">
+      <span className="w-9 text-[12px] font-bold tabular-nums text-ink-dim">
         {event.minute}
       </span>
       <span
@@ -74,9 +74,9 @@ export default function MatchEventRow({
         {visual.icon}
         {visual.label}
       </span>
-      <span className="min-w-0 flex-1 truncate text-[12px] text-slate-300">
-        <span className="text-slate-500">{teamCode(team)}</span>
-        {detail && <span className="ml-1.5 text-slate-200">{detail}</span>}
+      <span className="min-w-0 flex-1 truncate text-[12px] text-ink-dim">
+        <span className="text-ink-faint">{teamCode(team)}</span>
+        {detail && <span className="ml-1.5 text-ink">{detail}</span>}
       </span>
     </motion.li>
   );

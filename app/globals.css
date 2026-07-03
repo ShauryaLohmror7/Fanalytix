@@ -1,22 +1,46 @@
 @import "tailwindcss";
 
 @theme {
-  /* FanalytiX palette — validated for dark surface */
-  --color-pitch-950: #050807;
-  --color-pitch-900: #0a0f0d;
-  --color-pitch-850: #0d1512;
-  --color-pitch-800: #111a16;
-  --color-pitch-700: #1a2620;
+  /* ------------------------------------------------------------------
+     FanalytiX v4 — "Royal Gold" identity.
+     Lapis-sapphire surfaces framed in engraved gold, ivory ink, Cinzel
+     display face. Ornate but readable: real data wears the gold, never
+     invented numbers. Chart palette validated on surface #122150
+     (neg #f43f5e: CVD ΔE 16.5 deutan; all series + gold ≥ 3:1).
+     Green = live/positive · Rose = negative · Gold = brand/frame.
+     (Token names keep the navy-* prefix so components stay untouched.)
+  ------------------------------------------------------------------ */
 
-  --color-neon-green: #4ade80;
-  --color-neon-green-dim: #22c55e;
-  --color-neon-red: #e11d48;
-  --color-neon-red-bright: #fb7185;
-  --color-neon-yellow: #facc15;
-  --color-neon-blue: #0ea5e9;
-  --color-neutral-ink: #cbd5e1;
+  /* Lapis surfaces (page → raised) */
+  --color-navy-950: #0a1230;
+  --color-navy-900: #0e1a40;
+  --color-navy-850: #122150;
+  --color-navy-800: #17295f;
+  --color-navy-700: #1f3573;
+
+  /* Ivory ink */
+  --color-ink: #f3eeda;
+  --color-ink-dim: #c2c3bb;
+  --color-ink-faint: #8f93a8;
+
+  /* Trophy gold */
+  --color-gold: #d8b45e;
+  --color-gold-bright: #f0d68a;
+  --color-gold-deep: #a8863c;
+
+  --color-pitch: #2e7d5b;
+
+  /* Semantic — live + sentiment only */
+  --color-live: #34d399;
+  --color-pos: #4ade80;
+  --color-neg: #f43f5e;
+  --color-neg-bright: #fb7185;
+  --color-warn: #eab308;
+  --color-vol: #38bdf8;
+  --color-neutral-ink: #e2e8f0;
 
   --font-display: var(--font-display), system-ui, sans-serif;
+  --font-royal: var(--font-royal), "Cinzel", serif;
 }
 
 :root {
@@ -26,95 +50,360 @@
 html,
 body {
   height: 100%;
-  background: var(--color-pitch-950);
-  color: #e7ece9;
+  color: var(--color-ink);
   overflow-x: hidden;
+  background-color: #0d1738;
 }
 
-/* ---------- Reusable surface treatments ---------- */
+/* Royal backdrop: lapis depths, faint filigree damask, stadium floodlight
+   blooms, gold dusk — and engraved pitch markings on the floor. */
+body {
+  background-image:
+    /* chalk-gold centre circle low on the floor */
+    radial-gradient(
+      circle at 50% 122%,
+      transparent 23.8%,
+      rgba(216, 180, 94, 0.07) 24%,
+      rgba(216, 180, 94, 0.07) 24.5%,
+      transparent 24.7%
+    ),
+    radial-gradient(
+      circle at 50% 122%,
+      transparent 37.8%,
+      rgba(216, 180, 94, 0.05) 38%,
+      rgba(216, 180, 94, 0.05) 38.4%,
+      transparent 38.6%
+    ),
+    /* floodlight blooms, warm ivory */
+    radial-gradient(ellipse 52% 36% at 14% -6%, rgba(255, 244, 214, 0.09), transparent 60%),
+    radial-gradient(ellipse 52% 36% at 86% -6%, rgba(255, 244, 214, 0.09), transparent 60%),
+    /* gold aurora at the crown */
+    radial-gradient(ellipse 46% 30% at 50% 0%, rgba(216, 180, 94, 0.12), transparent 65%),
+    /* faint damask diamonds */
+    repeating-linear-gradient(
+      45deg,
+      rgba(216, 180, 94, 0.016) 0px,
+      rgba(216, 180, 94, 0.016) 1px,
+      transparent 1px,
+      transparent 26px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(216, 180, 94, 0.016) 0px,
+      rgba(216, 180, 94, 0.016) 1px,
+      transparent 1px,
+      transparent 26px
+    ),
+    /* lapis depth: lit crown falling to midnight edges */
+    radial-gradient(ellipse 100% 75% at 50% 22%, #16295f 0%, #101d4a 45%, #0c163b 75%, #091029 100%);
+  background-attachment: fixed;
+}
 
-.glass-panel {
+/* Engraved gold page frame (the mockup's outer border) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 8px;
+  z-index: 90;
+  pointer-events: none;
+  border: 1px solid rgba(216, 180, 94, 0.32);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 0 0 3px rgba(9, 16, 41, 0.0),
+    inset 0 0 22px rgba(216, 180, 94, 0.05),
+    0 0 0 3px rgba(216, 180, 94, 0.07);
+}
+
+/* Slow floodlight sweep drifting across the court */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 30% 42% at 50% 45%,
+    rgba(255, 244, 214, 0.045),
+    transparent 70%
+  );
+  animation: floodlight-drift 26s ease-in-out infinite alternate;
+}
+@keyframes floodlight-drift {
+  from {
+    transform: translateX(-12%) rotate(-2deg);
+  }
+  to {
+    transform: translateX(12%) rotate(2deg);
+  }
+}
+
+/* ---------- Royal display face ---------- */
+
+.font-royal {
+  font-family: var(--font-royal);
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Liquid glass, gilded ---------- */
+
+.glass {
+  background: linear-gradient(
+    135deg,
+    rgba(240, 214, 138, 0.10),
+    rgba(23, 41, 95, 0.35) 45%,
+    rgba(240, 214, 138, 0.07)
+  );
+  -webkit-backdrop-filter: blur(22px) saturate(155%);
+  backdrop-filter: blur(22px) saturate(155%);
+  border: 1px solid rgba(216, 180, 94, 0.32);
+  box-shadow:
+    inset 0 1px 0 rgba(240, 214, 138, 0.3),
+    inset 0 -1px 0 rgba(240, 214, 138, 0.08),
+    0 12px 40px rgba(4, 8, 24, 0.5);
+}
+
+.glass-deep {
+  background: linear-gradient(
+    160deg,
+    rgba(20, 35, 82, 0.82),
+    rgba(12, 22, 59, 0.9)
+  );
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+  border: 1px solid rgba(216, 180, 94, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(240, 214, 138, 0.22),
+    0 16px 48px rgba(4, 8, 24, 0.55);
+}
+
+.liquid-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(240, 214, 138, 0.14),
+    rgba(23, 41, 95, 0.4)
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(216, 180, 94, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(240, 214, 138, 0.4),
+    inset 0 -1px 0 rgba(240, 214, 138, 0.08),
+    0 6px 22px rgba(4, 8, 24, 0.4);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.liquid-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(240, 214, 138, 0.65);
+  box-shadow:
+    inset 0 1px 0 rgba(240, 214, 138, 0.55),
+    0 10px 30px rgba(4, 8, 24, 0.5),
+    0 0 14px rgba(216, 180, 94, 0.18);
+}
+.liquid-btn:active {
+  transform: translateY(0) scale(0.985);
+}
+.liquid-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(240, 214, 138, 0.32) 46%,
+    rgba(240, 214, 138, 0.08) 54%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+.liquid-btn:hover::after {
+  transform: translateX(120%);
+}
+
+/* ---------- Ornate framed surfaces ---------- */
+
+.panel {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgba(21, 37, 88, 0.8),
+    rgba(12, 22, 59, 0.88)
+  );
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid rgba(216, 180, 94, 0.34);
+  box-shadow:
+    inset 0 0 0 1px rgba(9, 16, 41, 0.9),
+    inset 0 0 0 2px rgba(216, 180, 94, 0.12),
+    inset 0 1px 0 rgba(240, 214, 138, 0.22),
+    0 16px 48px rgba(4, 8, 24, 0.5);
+}
+
+.chip {
+  background: linear-gradient(
+    135deg,
+    rgba(240, 214, 138, 0.1),
+    rgba(23, 41, 95, 0.4)
+  );
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(216, 180, 94, 0.28);
+  box-shadow: inset 0 1px 0 rgba(240, 214, 138, 0.22);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.chip:hover {
+  border-color: rgba(240, 214, 138, 0.6);
+}
+
+.well {
+  background: rgba(6, 11, 32, 0.55);
+  border: 1px solid rgba(216, 180, 94, 0.16);
+  box-shadow: inset 0 1px 4px rgba(4, 8, 24, 0.4);
+}
+
+.menu {
   background: linear-gradient(
     165deg,
-    rgba(20, 30, 25, 0.72),
-    rgba(8, 13, 11, 0.85)
+    rgba(26, 45, 104, 0.94),
+    rgba(14, 26, 64, 0.96)
   );
-  border: 1px solid rgba(74, 222, 128, 0.08);
-  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  border: 1px solid rgba(216, 180, 94, 0.4);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 20px 50px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 rgba(240, 214, 138, 0.28),
+    0 24px 64px rgba(4, 8, 24, 0.65);
 }
 
-.glass-chip {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.text-glow-green {
-  text-shadow: 0 0 18px rgba(74, 222, 128, 0.55);
-}
-
-.ring-glow-green {
+/* Gold treatments */
+.gold-glow {
   box-shadow:
-    0 0 12px rgba(74, 222, 128, 0.35),
-    0 0 2px rgba(74, 222, 128, 0.6);
+    0 0 0 1px rgba(216, 180, 94, 0.5),
+    0 0 18px rgba(216, 180, 94, 0.25);
+}
+.text-gold-sheen {
+  background: linear-gradient(100deg, #f0d68a, #d8b45e 45%, #b6903f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Portal animations (21st.dev patterns, recreated) ---------- */
+
+/* Border Beam: a gold spark orbiting the ask-bar's border */
+@property --beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.border-beam {
+  position: relative;
+}
+.border-beam::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--beam-angle),
+    transparent 0deg,
+    transparent 296deg,
+    rgba(240, 214, 138, 0.95) 330deg,
+    rgba(216, 180, 94, 0.25) 348deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: beam-rotate 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes beam-rotate {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+/* Animated Shiny Text: light sweeping through gold lettering */
+.shiny-text {
+  background: linear-gradient(
+    120deg,
+    #c3a055 32%,
+    #fff6da 50%,
+    #c3a055 68%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shine-sweep 3.4s linear infinite;
+}
+@keyframes shine-sweep {
+  to {
+    background-position: -220% 0;
+  }
 }
 
 /* ---------- Scrollbars ---------- */
 
 .scroll-slim {
   scrollbar-width: thin;
-  scrollbar-color: rgba(74, 222, 128, 0.25) transparent;
+  scrollbar-color: rgba(216, 180, 94, 0.32) transparent;
 }
 .scroll-slim::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 .scroll-slim::-webkit-scrollbar-thumb {
-  background: rgba(74, 222, 128, 0.22);
+  background: rgba(216, 180, 94, 0.3);
   border-radius: 999px;
 }
 .scroll-slim::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* ---------- Ticker marquee ---------- */
-
-@keyframes ticker-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.ticker-track {
-  animation: ticker-scroll 60s linear infinite;
-}
-.ticker-track:hover {
-  animation-play-state: paused;
-}
-
-/* ---------- Live pulse dot ---------- */
+/* ---------- Live pulse ---------- */
 
 @keyframes pulse-dot {
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.45);
   }
   50% {
     opacity: 0.75;
-    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
+    box-shadow: 0 0 0 5px rgba(52, 211, 153, 0);
   }
 }
-
 .live-dot {
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
+@keyframes pulse-dot-red {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.45);
+  }
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 5px rgba(244, 63, 94, 0);
+  }
+}
 .live-dot-red {
-  animation: pulse-dot 1.4s ease-in-out infinite;
+  animation: pulse-dot-red 1.4s ease-in-out infinite;
 }

@@ -71,6 +71,10 @@ export interface Match {
   awayTeam: Team;
   homeScore?: number;
   awayScore?: number;
+  /** Half-time score, when the provider supplies it */
+  homeScoreHT?: number;
+  awayScoreHT?: number;
+  referee?: string;
   events?: MatchEvent[];
   statistics?: MatchStatistic[];
 }

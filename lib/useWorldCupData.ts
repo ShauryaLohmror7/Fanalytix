@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ApiEnvelope, Match } from "./types";
-import { isInPlay } from "./matchUtils";
+import type { ApiEnvelope, Match, StandingGroup } from "./types";
+import { deriveStageLabel, isInPlay } from "./matchUtils";
 
 export interface WorldCupData {
   /** false once we know no provider is configured */
@@ -11,6 +11,11 @@ export interface WorldCupData {
   error?: string;
   liveMatches: Match[];
   todayMatches: Match[];
+  /** Whole tournament schedule (season scope), refreshed slowly. */
+  seasonMatches: Match[];
+  standings: StandingGroup[];
+  /** Current tournament stage derived from real match data, or null. */
+  stageLabel: string | null;
   /** Best match to feature: first live match, else next upcoming today. */
   featuredMatch: Match | null;
   /** Matches for the bottom ticker: live first, then rest of today. */
@@ -18,12 +23,13 @@ export interface WorldCupData {
   refresh: () => void;
 }
 
-const LIVE_POLL_MS = 30_000;
-const TODAY_POLL_MS = 120_000;
+/** Fast cadence for live/today; slow for season/standings (rate limits). */
+const FAST_POLL_MS = 45_000;
+const SLOW_POLL_MS = 5 * 60_000;
 
-async function fetchEnvelope(url: string): Promise<ApiEnvelope<Match[]>> {
+async function fetchEnvelope<T>(url: string): Promise<ApiEnvelope<T>> {
   const res = await fetch(url, { cache: "no-store" });
-  return (await res.json()) as ApiEnvelope<Match[]>;
+  return (await res.json()) as ApiEnvelope<T>;
 }
 
 export function useWorldCupData(): WorldCupData {
@@ -32,13 +38,15 @@ export function useWorldCupData(): WorldCupData {
   const [error, setError] = useState<string>();
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [todayMatches, setTodayMatches] = useState<Match[]>([]);
+  const [seasonMatches, setSeasonMatches] = useState<Match[]>([]);
+  const [standings, setStandings] = useState<StandingGroup[]>([]);
   const mounted = useRef(true);
 
-  const load = useCallback(async () => {
+  const loadFast = useCallback(async () => {
     try {
       const [live, today] = await Promise.all([
-        fetchEnvelope("/api/worldcup/live"),
-        fetchEnvelope("/api/worldcup/matches"),
+        fetchEnvelope<Match[]>("/api/worldcup/live"),
+        fetchEnvelope<Match[]>("/api/worldcup/matches"),
       ]);
       if (!mounted.current) return;
       setConfigured(live.configured && today.configured);
@@ -52,19 +60,42 @@ export function useWorldCupData(): WorldCupData {
     }
   }, []);
 
+  const loadSlow = useCallback(async () => {
+    try {
+      const [season, table] = await Promise.all([
+        fetchEnvelope<Match[]>("/api/worldcup/matches?scope=season"),
+        fetchEnvelope<StandingGroup[]>("/api/worldcup/standings"),
+      ]);
+      if (!mounted.current) return;
+      setSeasonMatches(season.data ?? []);
+      setStandings(table.data ?? []);
+    } catch {
+      // Non-fatal: season views show their own empty states.
+    }
+  }, []);
+
   useEffect(() => {
     mounted.current = true;
-    load();
-    const liveTimer = setInterval(load, LIVE_POLL_MS);
+    loadFast();
+    loadSlow();
+    const fast = setInterval(loadFast, FAST_POLL_MS);
+    const slow = setInterval(loadSlow, SLOW_POLL_MS);
     return () => {
       mounted.current = false;
-      clearInterval(liveTimer);
+      clearInterval(fast);
+      clearInterval(slow);
     };
-  }, [load]);
+  }, [loadFast, loadSlow]);
 
-  // Deliberately separate slower cadence isn't needed — a single 30s poll
-  // covers both endpoints and the server caches upstream calls.
-  void TODAY_POLL_MS;
+  const stageLabel = useMemo(
+    () =>
+      deriveStageLabel(
+        seasonMatches.length
+          ? seasonMatches
+          : [...liveMatches, ...todayMatches],
+      ),
+    [seasonMatches, liveMatches, todayMatches],
+  );
 
   const featuredMatch = useMemo<Match | null>(() => {
     if (liveMatches.length) return liveMatches[0];
@@ -79,15 +110,23 @@ export function useWorldCupData(): WorldCupData {
     return [...liveMatches, ...todayMatches.filter((m) => !liveIds.has(m.id))];
   }, [liveMatches, todayMatches]);
 
+  const refresh = useCallback(() => {
+    loadFast();
+    loadSlow();
+  }, [loadFast, loadSlow]);
+
   return {
     configured,
     loading,
     error,
     liveMatches,
     todayMatches,
+    seasonMatches,
+    standings,
+    stageLabel,
     featuredMatch,
     tickerMatches,
-    refresh: load,
+    refresh,
   };
 }
 
