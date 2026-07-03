@@ -7,7 +7,9 @@ import { useEffect, useRef, useState } from "react";
 import LunarBackground from "@/components/landing/LunarBackground";
 import { BlurPullUp, TrackingReveal } from "@/components/landing/AnimatedText";
 import IntroShader from "@/components/IntroShader";
-import { EXPERIENCES, resolveExperience } from "@/lib/experiences";
+import { EVENT_REGISTRY } from "@/lib/events/registry";
+import { resolveEvent } from "@/lib/events/resolveEvent";
+import type { EventResolution } from "@/lib/events/types";
 
 // The Football arena is a lazily-loaded module — its code (three.js, charts,
 // data providers) only downloads once someone summons a football event.
@@ -15,33 +17,33 @@ const FootballExperience = dynamic(
   () => import("@/components/football/FootballExperience"),
   { ssr: false },
 );
+const GenericArena = dynamic(() => import("@/components/arena/GenericArena"), {
+  ssr: false,
+});
 
 type Stage =
   | { name: "landing" }
-  | { name: "transition"; query: string }
-  | { name: "football"; query: string };
+  | { name: "transition"; resolution: EventResolution }
+  | { name: "arena"; resolution: EventResolution };
 
-/** One elegant example per arena — shows the breadth of the idea. */
-const EXAMPLES = ["FIFA World Cup 2026", "Switzerland vs Algeria", "SpaceX IPO"];
+/** One example per major domain — the breadth of the idea in one row. */
+const EXAMPLES = (["football", "space", "markets", "elections"] as const).map(
+  (id) => EVENT_REGISTRY.find((e) => e.id === id)!.exampleQueries[0],
+);
 
-function Landing({ onSummon }: { onSummon: (query: string) => void }) {
+function Landing({
+  onSummon,
+}: {
+  onSummon: (resolution: EventResolution) => void;
+}) {
   const [query, setQuery] = useState("");
-  const [miss, setMiss] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const submit = (raw: string) => {
-    const q = raw.trim();
-    if (!q) return;
-    const exp = resolveExperience(q);
-    if (exp?.available) {
-      onSummon(q);
-      return;
-    }
-    setMiss(
-      exp
-        ? `${exp.name} — ${exp.tagline}. The Football arena is open today.`
-        : "That arena hasn’t been built yet. Football is open today — more worlds are coming.",
-    );
+    if (!raw.trim()) return;
+    // Every summoning is honoured: available arenas open fully, the rest
+    // open the honest coming-soon shell — never the wrong arena.
+    onSummon(resolveEvent(raw));
   };
 
   return (
@@ -104,10 +106,7 @@ function Landing({ onSummon }: { onSummon: (query: string) => void }) {
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              if (miss) setMiss(null);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit(query)}
             placeholder="A match, a tournament, a moment…"
             autoFocus
@@ -123,22 +122,7 @@ function Landing({ onSummon }: { onSummon: (query: string) => void }) {
           </button>
         </motion.div>
 
-        {/* Gentle guidance, only when needed */}
-        <AnimatePresence mode="wait">
-          {miss && (
-            <motion.p
-              key={miss}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mt-5 max-w-md text-center text-[12.5px] leading-relaxed text-ink-dim"
-            >
-              {miss}
-            </motion.p>
-          )}
-        </AnimatePresence>
-
-        {/* Three whispers of what's possible */}
+        {/* Whispers of what's possible */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
           {EXAMPLES.map((e, i) => (
             <motion.button
@@ -161,7 +145,7 @@ function Landing({ onSummon }: { onSummon: (query: string) => void }) {
           delay={2.5}
           from="0.6em"
           to="0.3em"
-          text={`${EXPERIENCES.filter((e) => e.available).length} ARENA OPEN · ${EXPERIENCES.filter((e) => !e.available).length} IN THE MAKING`}
+          text={`${EVENT_REGISTRY.filter((e) => e.available).length} ARENA OPEN · ${EVENT_REGISTRY.filter((e) => !e.available && e.id !== "generic").length} IN THE MAKING`}
         />
       </footer>
     </motion.div>
@@ -174,16 +158,25 @@ export default function Page() {
   // Deep-link/debug: /?arena=football&q=brazil jumps straight into an arena.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("arena") === "football") {
-      setStage({ name: "football", query: params.get("q") ?? "" });
+    const arena = params.get("arena");
+    if (arena === "football" || arena === "generic") {
+      const resolution = resolveEvent(params.get("q") ?? "");
+      setStage({
+        name: "arena",
+        resolution: { ...resolution, arenaId: arena },
+      });
     }
   }, []);
+
+  const inArena = stage.name === "transition" || stage.name === "arena";
 
   return (
     <>
       <AnimatePresence mode="wait">
         {stage.name === "landing" && (
-          <Landing onSummon={(query) => setStage({ name: "transition", query })} />
+          <Landing
+            onSummon={(resolution) => setStage({ name: "transition", resolution })}
+          />
         )}
       </AnimatePresence>
 
@@ -191,19 +184,25 @@ export default function Page() {
       <AnimatePresence>
         {stage.name === "transition" && (
           <IntroShader
-            onDone={() => setStage({ name: "football", query: stage.query })}
+            onDone={() => setStage({ name: "arena", resolution: stage.resolution })}
           />
         )}
       </AnimatePresence>
 
-      {/* Mount the arena during the transition so the world is already
-          loading behind the shader curtain */}
-      {(stage.name === "transition" || stage.name === "football") && (
-        <FootballExperience
-          initialQuery={stage.query}
-          onExit={() => setStage({ name: "landing" })}
-        />
-      )}
+      {/* Mount the arena during the transition so it's already loading
+          behind the shader curtain */}
+      {inArena &&
+        (stage.resolution.arenaId === "football" ? (
+          <FootballExperience
+            initialQuery={stage.resolution.query}
+            onExit={() => setStage({ name: "landing" })}
+          />
+        ) : (
+          <GenericArena
+            resolution={stage.resolution}
+            onExit={() => setStage({ name: "landing" })}
+          />
+        ))}
     </>
   );
 }

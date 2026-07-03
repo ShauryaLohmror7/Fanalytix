@@ -6,11 +6,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 /**
- * The portal background — adapted from 21st.dev's "Lunar Gravity" scene,
- * rebuilt for FanalytiX: a golden orb (with a whisper of football seams)
- * whose particle ring assembles itself out of the sphere on arrival.
- * No external textures or HDRs: everything is procedural, so the portal
- * paints instantly and works offline.
+ * The portal background — an event observatory. A golden celestial orb
+ * whose particle ring assembles itself out of the sphere on arrival,
+ * girdled by thin orbital rings (adapted from 21st.dev's "Lunar Gravity"
+ * scene). No external textures or HDRs: everything is procedural, so the
+ * portal paints instantly and works offline. Deliberately event-agnostic —
+ * no symbols of any single arena.
  */
 
 const RADIUS = 2;
@@ -19,50 +20,26 @@ type RingState = "hidden" | "animating" | "visible";
 
 /* ------------------------------ orb ------------------------------ */
 
-function seamLines(scale: number): THREE.Vector3[][] {
-  const phi = (1 + Math.sqrt(5)) / 2;
-  const bases: number[][] = [
-    [0, 1, 3 * phi],
-    [1, 2 + phi, 2 * phi],
-    [phi, 2, 2 * phi + 1],
-  ];
-  const verts: THREE.Vector3[] = [];
-  for (const [a, b, c] of bases) {
-    for (const sa of a === 0 ? [1] : [1, -1]) {
-      for (const sb of [1, -1]) {
-        for (const sc of [1, -1]) {
-          const t = [a * sa, b * sb, c * sc];
-          verts.push(
-            new THREE.Vector3(t[0], t[1], t[2]),
-            new THREE.Vector3(t[1], t[2], t[0]),
-            new THREE.Vector3(t[2], t[0], t[1]),
-          );
-        }
-      }
-    }
-  }
-  const lines: THREE.Vector3[][] = [];
-  for (let i = 0; i < verts.length; i++) {
-    for (let j = i + 1; j < verts.length; j++) {
-      if (Math.abs(verts[i].distanceTo(verts[j]) - 2) < 0.01) {
-        const a = verts[i].clone().normalize();
-        const b = verts[j].clone().normalize();
-        const pts: THREE.Vector3[] = [];
-        for (let k = 0; k <= 5; k++) {
-          pts.push(
-            new THREE.Vector3().copy(a).lerp(b, k / 5).normalize().multiplyScalar(scale),
-          );
-        }
-        lines.push(pts);
-      }
-    }
-  }
-  return lines;
-}
-
 function GoldenOrb({ onIgnite }: { onIgnite: () => void }) {
   const meshRef = useRef<THREE.Group>(null);
-  const seams = useMemo(() => seamLines(RADIUS * 1.006), []);
+
+  /** Thin elliptical orbit lines girdling the orb. */
+  const orbits = useMemo(() => {
+    const mk = (r: number, tiltX: number, tiltZ: number) => {
+      const pts: THREE.Vector3[] = [];
+      for (let i = 0; i <= 120; i++) {
+        const t = (i / 120) * Math.PI * 2;
+        const p = new THREE.Vector3(Math.cos(t) * r, 0, Math.sin(t) * r * 0.98);
+        p.applyEuler(new THREE.Euler(tiltX, 0, tiltZ));
+        pts.push(p);
+      }
+      return pts;
+    };
+    return [
+      mk(RADIUS * 1.35, 1.25, 0.18),
+      mk(RADIUS * 1.6, -1.05, -0.32),
+    ];
+  }, []);
 
   useFrame((_, delta) => {
     if (meshRef.current)
@@ -86,13 +63,13 @@ function GoldenOrb({ onIgnite }: { onIgnite: () => void }) {
           emissiveIntensity={0.6}
         />
       </mesh>
-      {seams.map((pts, i) => (
+      {orbits.map((pts, i) => (
         <Line
           key={i}
           points={pts}
-          color="#f7e5b0"
+          color="#f0d68a"
           transparent
-          opacity={0.16}
+          opacity={0.22}
           lineWidth={1}
         />
       ))}

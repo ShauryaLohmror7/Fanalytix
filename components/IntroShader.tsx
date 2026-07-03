@@ -150,7 +150,7 @@ export default function IntroShader({ onDone }: { onDone: () => void }) {
           transition={{ duration: 1, delay: 1.4 }}
           className="mt-3 text-[11px] font-medium uppercase tracking-[0.5em] text-ink-dim"
         >
-          Football Intelligence
+          Event Intelligence
         </motion.div>
         <motion.div
           initial={{ opacity: 0 }}

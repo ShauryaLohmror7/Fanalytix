@@ -11,7 +11,7 @@ import CommandPalette from "@/components/football/CommandPalette";
 import NotificationsDrawer from "@/components/football/NotificationsDrawer";
 import MatchDetail from "@/components/football/MatchDetail";
 import PromptDock from "@/components/football/PromptDock";
-import { GoldStatue } from "@/components/Ornaments";
+import { GoldStatue } from "@/components/football/Ornaments";
 import MatchesView from "@/components/football/views/MatchesView";
 import TeamsView from "@/components/football/views/TeamsView";
 import PlayersView from "@/components/football/views/PlayersView";
